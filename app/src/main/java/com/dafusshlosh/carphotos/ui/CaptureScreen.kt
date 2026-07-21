@@ -1,7 +1,11 @@
 package com.dafusshlosh.carphotos.ui
 
+import android.Manifest
 import android.content.ContentValues
+import android.content.pm.PackageManager
 import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -10,6 +14,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -29,10 +34,44 @@ fun CaptureScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
 
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
-    // First shot in a session must be the plate; after that, switches to damage mode automatically.
     var isPlateMode by remember { mutableStateOf(true) }
     var lastDetectedPlate by remember { mutableStateOf<String?>(null) }
     var statusText by remember { mutableStateOf("צלם את לוחית הרישוי") }
+
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted -> hasCameraPermission = granted }
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    if (!hasCameraPermission) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text("צריך הרשאת מצלמה כדי לצלם", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                Text("אשר גישה למצלמה")
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = { navController.popBackStack() }) {
+                Text("חזרה")
+            }
+        }
+        return
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         AndroidView(
@@ -52,7 +91,9 @@ fun CaptureScreen(navController: NavHostController) {
                         cameraProvider.bindToLifecycle(
                             lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, capture
                         )
-                    } catch (e: Exception) { }
+                    } catch (e: Exception) {
+                        statusText = "שגיאה בפתיחת המצלמה: ${e.message}"
+                    }
                 }, ContextCompat.getMainExecutor(ctx))
                 previewView
             }
@@ -115,7 +156,6 @@ fun CaptureScreen(navController: NavHostController) {
 
                 OutlinedButton(
                     onClick = {
-                        // Start a new car group manually (e.g. plate photo was skipped/failed)
                         isPlateMode = true
                         lastDetectedPlate = null
                         statusText = "צלם את לוחית הרישוי"
