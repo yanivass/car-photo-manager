@@ -167,5 +167,12 @@ fun HomeScreen(navController: NavHostController) {
         ) {
             Text("צלם רכב חדש")
         }
+
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "גרסת בדיקה: v3-scan-status",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.outline
+        )
     }
 }
