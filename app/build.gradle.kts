@@ -60,7 +60,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
 
-    // ML Kit on-device text recognition (Latin script - covers Israeli plates, digits+letters)
+    // ML Kit on-device text recognition (kept as unused fallback dependency)
     implementation("com.google.mlkit:text-recognition:16.0.1")
 
     // Room
@@ -81,4 +81,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // HTTP client for Plate Recognizer cloud OCR API
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
